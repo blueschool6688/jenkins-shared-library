@@ -10,9 +10,6 @@ FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
 export APP_NAME="${APP_NAME:-}"
 export BAO_SECRET_PATH="${BAO_SECRET_PATH:-}"
 export BAO_SECRET_VERSION="${BAO_SECRET_VERSION:-3}" # Thêm version cho bao
-BLUE_PORT="${BLUE_PORT:-8080}"
-GREEN_PORT="${GREEN_PORT:-8081}"
-
 if [ -z "$APP_NAME" ]; then
     echo "❌ LỖI: Biến APP_NAME chưa được set từ môi trường!"
     exit 1
@@ -96,24 +93,17 @@ docker pull ${FULL_IMAGE}
 # 2. Xác định môi trường đang chạy (Blue hay Green)
 if docker ps --format '{{.Names}}' | grep -Eq "^${APP_NAME}-blue$"; then
     CURRENT_ENV="blue"
-    CURRENT_PORT=${BLUE_PORT}
     NEW_ENV="green"
-    NEW_PORT=${GREEN_PORT}
 elif docker ps --format '{{.Names}}' | grep -Eq "^${APP_NAME}-green$"; then
     CURRENT_ENV="green"
-    CURRENT_PORT=${GREEN_PORT}
     NEW_ENV="blue"
-    NEW_PORT=${BLUE_PORT}
 else
-    # Nếu chạy lần đầu hoặc từ container tên cũ (đang chạy ở BLUE_PORT)
-    # Ta mặc định chạy container mới là 'green' trên GREEN_PORT để tránh trùng BLUE_PORT
+    # Nếu chạy lần đầu hoặc từ container tên cũ
     CURRENT_ENV="legacy"
-    CURRENT_PORT=${BLUE_PORT}
     NEW_ENV="green"
-    NEW_PORT=${GREEN_PORT}
 fi
 
-echo "[2/6] Môi trường hiện tại là ${CURRENT_ENV}. Đang chuẩn bị bật môi trường mới ${NEW_ENV} ở port ${NEW_PORT}..."
+echo "[2/6] Môi trường hiện tại là ${CURRENT_ENV}. Đang chuẩn bị bật môi trường mới ${NEW_ENV} (với port tự động)..."
 
 # 3. Khởi động container MỚI
 echo "[3/6] Chạy container mới..."
@@ -124,13 +114,21 @@ docker run -d \
     --name ${APP_NAME}-${NEW_ENV} \
     --env-file "${TEMP_ENV_FILE}" \
     --restart unless-stopped \
-    -p ${NEW_PORT}:80 \
+    -p 127.0.0.1::80 \
     ${FULL_IMAGE}
 
 if [ $? -ne 0 ]; then
     echo "❌ LỖI: Không thể khởi chạy container mới ${APP_NAME}-${NEW_ENV}!"
     exit 1
 fi
+
+# Lấy port host ngẫu nhiên đã được Docker cấp phát
+NEW_PORT=$(docker port ${APP_NAME}-${NEW_ENV} 80 | awk -F ':' '{print $2}')
+if [ -z "$NEW_PORT" ]; then
+    echo "❌ LỖI: Không thể lấy dynamic port từ container!"
+    exit 1
+fi
+echo "=> Container mới đã bind vào port động trên máy chủ: ${NEW_PORT}"
 
 # 4. Đợi container mới sẵn sàng
 echo "[4/6] Đợi 5 giây cho ứng dụng trong container khởi động hoàn toàn..."

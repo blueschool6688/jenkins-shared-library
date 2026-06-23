@@ -14,8 +14,6 @@ def call(Map config = [:]) {
     def appName = config.appName ?: (env.APP_NAME ?: imageName)
     def baoSecretPath = config.baoSecretPath ?: (env.BAO_SECRET_PATH ?: "${appName}/dev")
     def baoSecretVersion = config.baoSecretVersion ?: (env.BAO_SECRET_VERSION ?: '3')
-    def bluePort = config.bluePort ?: (env.BLUE_PORT ?: '8080')
-    def greenPort = config.greenPort ?: (env.GREEN_PORT ?: '8081')
 
     // Khởi tạo đối tượng DockerRunner từ thư mục src/
     DockerRunner docker = new DockerRunner(this)
@@ -37,8 +35,6 @@ def call(Map config = [:]) {
             APP_NAME = "${appName}"
             BAO_SECRET_PATH = "${baoSecretPath}"
             BAO_SECRET_VERSION = "${baoSecretVersion}"
-            BLUE_PORT = "${bluePort}"
-            GREEN_PORT = "${greenPort}"
         }
 
         stages {
@@ -89,8 +85,6 @@ def call(Map config = [:]) {
                                     "APP_NAME='\$APP_NAME' \\
                                      BAO_SECRET_PATH='\$BAO_SECRET_PATH' \\
                                      BAO_SECRET_VERSION='\$BAO_SECRET_VERSION' \\
-                                     BLUE_PORT='\$BLUE_PORT' \\
-                                     GREEN_PORT='\$GREEN_PORT' \\
                                      BAO_ADDR='\$BAO_ADDR' \\
                                      BAO_TOKEN='\$BAO_TOKEN' \\
                                      DOCKER_USERNAME='\$DOCKER_USERNAME' \\
