@@ -2,15 +2,14 @@
 import com.mycompany.devops.DockerRunner
 
 def call(Map config = [:]) {
-    def imageName = config.imageName
-    def ipServer = config.ipServer
+    def imageName = config.imageName ?: env.IMAGE_NAME
+    def ipServer = config.ipServer ?: env.IP_SERVER
     
     // Default values if not provided
     def agentLabel = config.agentLabel ?: 'jenkins-agent'
     def serverSshDeploy = config.serverSshDeploy ?: 'server-ssh-key'
     def dockerHubCredsId = config.dockerHubCredsId ?: 'dockerhub-creds'
     def discordWebhookId = config.discordWebhookId ?: 'discord-webhook-url'
-    
     // Custom configurations for deploy script
     def appName = config.appName ?: (env.APP_NAME ?: imageName)
     def baoSecretPath = config.baoSecretPath ?: (env.BAO_SECRET_PATH ?: "${appName}/dev")
