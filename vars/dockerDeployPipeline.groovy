@@ -11,9 +11,9 @@ def call(Map config = [:]) {
     def dockerHubCredsId = config.dockerHubCredsId ?: 'dockerhub-creds'
     def discordWebhookId = config.discordWebhookId ?: 'discord-webhook-url'
     // Custom configurations for deploy script
-    def appName = env.APP_NAME
-    def baoSecretPath = env.BAO_SECRET_PATH
-    def baoSecretVersion =env.BAO_SECRET_VERSION
+    def appName = config.appName ?: (env.APP_NAME ?: imageName)
+    def baoSecretPath = config.baoSecretPath ?: (env.BAO_SECRET_PATH ?: "${appName}/dev")
+    def baoSecretVersion = config.baoSecretVersion ?: (env.BAO_SECRET_VERSION ?: '3')
 
     // Khởi tạo đối tượng DockerRunner từ thư mục src/
     DockerRunner docker = new DockerRunner(this)
@@ -111,7 +111,8 @@ def call(Map config = [:]) {
                     try {
                         commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
                         commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
-                        commitMsg = commitMsg.replace('"', '\\"').replace('\n', '\\n')
+                        commitMsg = commitMsg.replace('\r', '').replace("'", "'\\''").replace('"', '\\"').replace('\n', '\\n')
+                        commitAuthor = commitAuthor.replace('\r', '').replace("'", "'\\''").replace('"', '\\"').replace('\n', '\\n')
                     } catch (Exception e) {
                         echo "Failed to get git commit info: ${e.message}"
                     }
@@ -144,7 +145,8 @@ def call(Map config = [:]) {
                     try {
                         commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
                         commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
-                        commitMsg = commitMsg.replace('"', '\\"').replace('\n', '\\n')
+                        commitMsg = commitMsg.replace('\r', '').replace("'", "'\\''").replace('"', '\\"').replace('\n', '\\n')
+                        commitAuthor = commitAuthor.replace('\r', '').replace("'", "'\\''").replace('"', '\\"').replace('\n', '\\n')
                     } catch (Exception e) {
                         echo "Failed to get git commit info: ${e.message}"
                     }
