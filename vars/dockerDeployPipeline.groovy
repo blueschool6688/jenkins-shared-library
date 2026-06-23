@@ -12,11 +12,11 @@ def call(Map config = [:]) {
     def discordWebhookId = config.discordWebhookId ?: 'discord-webhook-url'
     
     // Custom configurations for deploy script
-    def appName = config.appName ?: imageName
-    def baoSecretPath = config.baoSecretPath ?: "${appName}/dev"
-    def baoSecretVersion = config.baoSecretVersion ?: '3'
-    def bluePort = config.bluePort ?: '8080'
-    def greenPort = config.greenPort ?: '8081'
+    def appName = config.appName ?: (env.APP_NAME ?: imageName)
+    def baoSecretPath = config.baoSecretPath ?: (env.BAO_SECRET_PATH ?: "${appName}/dev")
+    def baoSecretVersion = config.baoSecretVersion ?: (env.BAO_SECRET_VERSION ?: '3')
+    def bluePort = config.bluePort ?: (env.BLUE_PORT ?: '8080')
+    def greenPort = config.greenPort ?: (env.GREEN_PORT ?: '8081')
 
     // Khởi tạo đối tượng DockerRunner từ thư mục src/
     DockerRunner docker = new DockerRunner(this)
@@ -45,7 +45,13 @@ def call(Map config = [:]) {
         stages {
             stage('Checkout') {
                 steps {
-                    checkout scm
+                    script {
+                        try {
+                            checkout scm
+                        } catch (Exception e) {
+                            echo "Note: 'checkout scm' is only available when using Multibranch Pipeline or Pipeline script from SCM. Skipping checkout: ${e.message}"
+                        }
+                    }
                 }
             }
 
@@ -102,17 +108,21 @@ def call(Map config = [:]) {
         post {
             always {
                 script {
-                    // Gọi logic dọn dẹp từ src/
                     docker.cleanupImages(env.IMAGE_NAME, env.IMAGE_TAG)
                 }
             }
             success {
                 script {
-                    def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    def commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    def commitMsg = "N/A"
+                    def commitAuthor = "N/A"
+                    try {
+                        commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                        commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                        commitMsg = commitMsg.replace('"', '\\"').replace('\n', '\\n')
+                    } catch (Exception e) {
+                        echo "Failed to get git commit info: ${e.message}"
+                    }
                     def currentTime = new Date().format("yyyy-MM-dd HH:mm:ss")
-                    
-                    commitMsg = commitMsg.replace('"', '\\"').replace('\n', '\\n')
                     
                     withCredentials([string(credentialsId: discordWebhookId, variable: 'DISCORD_WEBHOOK')]) {
                         sh """
@@ -136,11 +146,16 @@ def call(Map config = [:]) {
             }
             failure {
                 script {
-                    def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    def commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    def commitMsg = "N/A"
+                    def commitAuthor = "N/A"
+                    try {
+                        commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                        commitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                        commitMsg = commitMsg.replace('"', '\\"').replace('\n', '\\n')
+                    } catch (Exception e) {
+                        echo "Failed to get git commit info: ${e.message}"
+                    }
                     def currentTime = new Date().format("yyyy-MM-dd HH:mm:ss")
-                    
-                    commitMsg = commitMsg.replace('"', '\\"').replace('\n', '\\n')
                     
                     withCredentials([string(credentialsId: discordWebhookId, variable: 'DISCORD_WEBHOOK')]) {
                         sh """
