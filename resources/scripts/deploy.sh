@@ -40,8 +40,14 @@ fetch_secrets_from_openbao() {
         exit 1
     fi
 
-    SECRET_JSON=$(bao kv get -format=json --version="${BAO_SECRET_VERSION}" "${BAO_SECRET_PATH}" 2>&1)
-    if [ $? -ne 0 ]; then
+    SECRET_JSON=$(curl -s -H "X-Vault-Token: ${BAO_TOKEN}" "${BAO_ADDR}/v1/secret/data/${BAO_SECRET_PATH}?version=${BAO_SECRET_VERSION}")
+    
+    if ! echo "${SECRET_JSON}" | jq -e '.data.data' > /dev/null 2>&1; then
+        API_PATH=$(echo "${BAO_SECRET_PATH}" | sed 's|/|/data/|')
+        SECRET_JSON=$(curl -s -H "X-Vault-Token: ${BAO_TOKEN}" "${BAO_ADDR}/v1/${API_PATH}?version=${BAO_SECRET_VERSION}")
+    fi
+
+    if ! echo "${SECRET_JSON}" | jq -e '.data.data' > /dev/null 2>&1; then
         echo "❌ LỖI: Không thể lấy secrets từ OpenBao!"
         echo "   Chi tiết: ${SECRET_JSON}"
         exit 1
