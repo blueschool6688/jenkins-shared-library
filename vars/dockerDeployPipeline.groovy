@@ -78,10 +78,10 @@ def call(Map config = [:]) {
                         withCredentials([usernamePassword(credentialsId: dockerHubCredsId, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                             sshagent(credentials: [serverSshDeploy]) {
                                 // 2. Copy script qua server và chạy script
-                                sh "scp -o StrictHostKeyChecking=no deploy.sh \$IP_SERVER:/tmp/deploy.sh"
+                                sh "scp -o StrictHostKeyChecking=no -P 2018 deploy.sh \$IP_SERVER:/tmp/deploy.sh"
                                 
                                 sh """
-                                ssh -o StrictHostKeyChecking=no \$IP_SERVER \\
+                                ssh -o StrictHostKeyChecking=no -p 2018 \$IP_SERVER \\
                                     "APP_NAME='\$APP_NAME' \\
                                      BAO_SECRET_PATH='\$BAO_SECRET_PATH' \\
                                      BAO_SECRET_VERSION='\$BAO_SECRET_VERSION' \\
