@@ -8,6 +8,7 @@ FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
 
 # Các biến này được set env từ bên ngoài (Jenkinsfile / Pipeline)
 export APP_NAME="${APP_NAME:-}"
+export DOMAIN="${DOMAIN:-$APP_NAME}"
 export BAO_SECRET_PATH="${BAO_SECRET_PATH:-}"
 export BAO_SECRET_VERSION="${BAO_SECRET_VERSION:-3}" # Thêm version cho bao
 if [ -z "$APP_NAME" ]; then
@@ -162,9 +163,7 @@ fi
 
 # 5. Đổi hướng Nginx sang container mới và Reload (KHÔNG DOWNTIME)
 echo "[5/6] Cập nhật Nginx trỏ vào port ${NEW_PORT}..."
-# ĐƯỜNG DẪN FILE NGINX TRÊN UBUNTU/DEBIAN
-# LƯU Ý: Phải trỏ vào file gốc ở sites-available (KHÔNG trỏ vào sites-enabled để tránh mất symlink)
-NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}"
+NGINX_CONF="/etc/nginx/sites-available/${DOMAIN}"
 
 if [ -f "$NGINX_CONF" ]; then
     # Thay thế port cũ thành port mới trong cấu hình proxy_pass
@@ -175,7 +174,7 @@ if [ -f "$NGINX_CONF" ]; then
     echo "Nginx đã được reload!"
 else
     echo "⚠️ CẢNH BÁO: Không tìm thấy file $NGINX_CONF"
-    echo "Bạn phải cấu hình lại đường dẫn file NGINX cho đúng hoặc tạo file cấu hình cho ${APP_NAME}."
+    echo "Bạn phải cấu hình lại đường dẫn file NGINX cho đúng hoặc tạo file cấu hình cho ${DOMAIN}."
 fi
 
 # 6. Tắt và xóa container CŨ

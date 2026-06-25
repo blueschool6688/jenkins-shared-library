@@ -12,6 +12,7 @@ def call(Map config = [:]) {
     def discordWebhookId = config.discordWebhookId ?: 'discord-webhook-url'
     // Custom configurations for deploy script
     def appName = config.appName ?: (env.APP_NAME ?: imageName)
+    def domain = config.domain ?: (env.DOMAIN ?: appName)
     def baoSecretPath = config.baoSecretPath ?: (env.BAO_SECRET_PATH ?: "${appName}/dev")
     def baoSecretVersion = config.baoSecretVersion ?: (env.BAO_SECRET_VERSION ?: '3')
 
@@ -33,6 +34,7 @@ def call(Map config = [:]) {
             
             // Env vars for deploy.sh
             APP_NAME = "${appName}"
+            DOMAIN = "${domain}"
             BAO_SECRET_PATH = "${baoSecretPath}"
             BAO_SECRET_VERSION = "${baoSecretVersion}"
         }
@@ -83,6 +85,7 @@ def call(Map config = [:]) {
                                 sh """
                                 ssh -o StrictHostKeyChecking=no -p 2018 \$IP_SERVER \\
                                     "APP_NAME='\$APP_NAME' \\
+                                     DOMAIN='\$DOMAIN' \\
                                      BAO_SECRET_PATH='\$BAO_SECRET_PATH' \\
                                      BAO_SECRET_VERSION='\$BAO_SECRET_VERSION' \\
                                      BAO_ADDR='\$BAO_ADDR' \\
