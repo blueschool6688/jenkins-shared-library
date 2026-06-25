@@ -40,15 +40,29 @@ fetch_secrets_from_openbao() {
         exit 1
     fi
 
-    SECRET_JSON=$(curl -s -H "X-Vault-Token: ${BAO_TOKEN}" "${BAO_ADDR}/v1/secret/data/${BAO_SECRET_PATH}?version=${BAO_SECRET_VERSION}")
-    
-    if ! echo "${SECRET_JSON}" | jq -e '.data.data' > /dev/null 2>&1; then
-        API_PATH=$(echo "${BAO_SECRET_PATH}" | sed 's|/|/data/|')
-        SECRET_JSON=$(curl -s -H "X-Vault-Token: ${BAO_TOKEN}" "${BAO_ADDR}/v1/${API_PATH}?version=${BAO_SECRET_VERSION}")
-    fi
+    BAO_ADDR="${BAO_ADDR%/}"
+    PATHS_TO_TRY=(
+        "secret/data/${BAO_SECRET_PATH}"
+        "$(echo "${BAO_SECRET_PATH}" | sed 's|/|/data/|')"
+        "kv/data/${BAO_SECRET_PATH}"
+        "${BAO_SECRET_PATH}"
+    )
 
-    if ! echo "${SECRET_JSON}" | jq -e '.data.data' > /dev/null 2>&1; then
-        echo "❌ LỖI: Không thể lấy secrets từ OpenBao!"
+    SUCCESS=0
+    for API_PATH in "${PATHS_TO_TRY[@]}"; do
+        API_PATH=$(echo "$API_PATH" | sed 's|//|/|g')
+        RESPONSE=$(curl -s -H "X-Vault-Token: ${BAO_TOKEN}" "${BAO_ADDR}/v1/${API_PATH}?version=${BAO_SECRET_VERSION}")
+        
+        if echo "${RESPONSE}" | jq -e '.data.data' > /dev/null 2>&1; then
+            SECRET_JSON="${RESPONSE}"
+            SUCCESS=1
+            break
+        fi
+        SECRET_JSON="${RESPONSE}"
+    done
+
+    if [ "$SUCCESS" -eq 0 ]; then
+        echo "❌ LỖI: Không thể lấy secrets từ OpenBao! Path: ${BAO_SECRET_PATH}"
         echo "   Chi tiết: ${SECRET_JSON}"
         exit 1
     fi
