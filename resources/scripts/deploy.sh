@@ -166,8 +166,8 @@ echo "[5/6] Cập nhật Nginx trỏ vào port ${NEW_PORT}..."
 NGINX_CONF="/etc/nginx/sites-available/${DOMAIN}"
 
 if [ -f "$NGINX_CONF" ]; then
-    # Thay thế port cũ thành port mới trong cấu hình proxy_pass
-    sed -i "s/proxy_pass http:\/\/127.0.0.1:[0-9]*/proxy_pass http:\/\/127.0.0.1:${NEW_PORT}/g" $NGINX_CONF
+    # Thay thế port cũ thành port mới trong cấu hình proxy_pass (hỗ trợ cả localhost và 127.0.0.1)
+    sed -i -E "s/proxy_pass http:\/\/(127\.0\.0\.1|localhost):[0-9]+/proxy_pass http:\/\/127.0.0.1:${NEW_PORT}/g" $NGINX_CONF
 
     # Reload Nginx (Thao tác này kết nối cũ vẫn giữ, kết nối mới vào port mới -> Zero Downtime)
     systemctl reload nginx
