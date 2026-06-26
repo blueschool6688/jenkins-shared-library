@@ -1,5 +1,5 @@
 // vars/dockerDeployPipeline.groovy
-import com.mycompany.devops.DockerRunner
+import com.service.devops.DockerRunner
 
 def call(Map config = [:]) {
     def imageName = config.imageName ?: env.IMAGE_NAME
