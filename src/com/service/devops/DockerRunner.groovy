@@ -1,4 +1,4 @@
-package com.mycompany.devops
+package com.service.devops
 
 class DockerRunner implements Serializable {
     def script 
