@@ -75,14 +75,14 @@ fetch_secrets_from_openbao() {
     echo "[PRE] ✅ Lấy thành công ${KEY_COUNT} keys từ OpenBao."
 }
 
-cleanup_temp_env() {
-    if [ -f "${TEMP_ENV_FILE}" ]; then
-        rm -f "${TEMP_ENV_FILE}"
-        echo "[CLEANUP] 🗑️  File .env tạm đã được xóa."
-    fi
-}
+# cleanup_temp_env() {
+#     if [ -f "${TEMP_ENV_FILE}" ]; then
+#         rm -f "${TEMP_ENV_FILE}"
+#         echo "[CLEANUP] 🗑️  File .env tạm đã được xóa."
+#     fi
+# }
 
-trap cleanup_temp_env EXIT
+# trap cleanup_temp_env EXIT
 
 echo "================================================="
 echo "🚀 Bắt đầu Deploy ZERO-DOWNTIME (Blue-Green) Image: ${FULL_IMAGE}"
