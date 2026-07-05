@@ -55,7 +55,6 @@ def call(Map config = [:]) {
             stage('Build Image') {
                 steps {
                     script {
-                        // Gọi logic từ src/
                         docker.buildImage(env.IMAGE_NAME, env.IMAGE_TAG)
                     }
                 }
@@ -64,7 +63,6 @@ def call(Map config = [:]) {
             stage('Push to Registry') {
                 steps {
                     script {
-                        // Gọi logic từ src/
                         docker.pushImage(env.IMAGE_NAME, env.IMAGE_TAG, dockerHubCredsId)
                     }
                 }
@@ -73,13 +71,11 @@ def call(Map config = [:]) {
             stage('Deploy to Server') {
                 steps {
                     script {
-                        // 1. Lấy script deploy từ thư mục resources/scripts/
                         def deployScriptContent = libraryResource('scripts/deploy.sh')
                         writeFile file: 'deploy.sh', text: deployScriptContent
                         
                         withCredentials([usernamePassword(credentialsId: dockerHubCredsId, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                             sshagent(credentials: [serverSshDeploy]) {
-                                // 2. Copy script qua server và chạy script
                                 sh "scp -o StrictHostKeyChecking=no -P 2018 deploy.sh \$IP_SERVER:/tmp/deploy.sh"
                                 
                                 sh """
